@@ -7,21 +7,22 @@ import requests
 from bs4 import BeautifulSoup
 
 news = {}
-for idx, row in raw_analyst_ratings_df.iterrows():
+for idx, row in tqdm(raw_analyst_ratings_df.iterrows()):
     
     url = row['url']
     date = row['date']
+    idx = row['Unnamed: 0']
 
+#     if date in dates:
     response = requests.get(url)
 
     if response.status_code == 200:
         html_content = response.text
 #         print(html_content)
     else:
-        print("Failed to retrieve the content")
+        print(f"{date}: Failed to retrieve the content")
 
     soup = BeautifulSoup(html_content, 'html.parser')
-    
     text = soup.find('body').get_text(separator="\n", strip=True).split('\n-\n')[-1]
 
 
@@ -32,7 +33,9 @@ for idx, row in raw_analyst_ratings_df.iterrows():
         if not nasdaq_df[nasdaq_df['Symbol']==text_list[i]].empty:
             ticker_news[text_list[i]] = text_list[i+1]
 
-    news[date] = ticker_news
+    news[f"{date}___{idx}"] = ticker_news
+    print("Got the news for date: ", date)
+    time.sleep(30)
 
 
 news_df = pd.DataFrame.from_dict(news).reset_index().rename(columns={'index':'Ticker'})
