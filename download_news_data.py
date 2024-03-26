@@ -21,7 +21,7 @@ os.makedirs(raw_data_dir, exist_ok=True)
 
 
 
-out_file = os.path.join(raw_data_dir, f"data.csv")
+out_file = os.path.join(raw_data_dir, f"data.txt")
 lock_file = os.path.join(raw_data_dir, f"run.lock")
 track_file = os.path.join(raw_data_dir, "track.num")
 if os.path.isfile(lock_file):
@@ -35,7 +35,7 @@ raw_analyst_ratings_df = load_dataset(dataset_name, file_name)
 # raw_analyst_ratings_df = pd.read_csv('raw_analyst_ratings.csv')
 num_rows = len(raw_analyst_ratings_df)
 start = num_rows//2
-end = num_rows
+end = num_rows*3//4
 
 if os.path.isfile(track_file):
     with open(track_file, 'r') as tf:
@@ -91,7 +91,7 @@ try:
         if _idx % 100 == 99:
             with open(out_file, 'a', encoding="utf-8") as wf:
                 for k, v in news_body.items():
-                    wf.write(f"{k}\t{v}\n")
+                    wf.write(f"{k: <10d}\t{v}\n")
                 news_body.clear()
             with open(track_file, 'w') as wtf:
                 wtf.write(f"{next_start}")
@@ -108,5 +108,5 @@ finally:
     os.remove(lock_file)
     with open(out_file, 'a', encoding="utf-8") as wf:
         for k, v in news_body.items():
-            wf.write(f"{k}\t{v}\n")
+            wf.write(f"{k: <10d}\t{v}\n")
         news_body.clear()
