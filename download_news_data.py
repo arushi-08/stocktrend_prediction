@@ -70,7 +70,7 @@ try:
 
         for r in range(retries):
             try:
-                response = requests.get(url, headers=headers, timeout=2)
+                response = requests.get(url, headers=headers, timeout=5)
                 if response.status_code == 200:
                     html_content = response.text
                     break
