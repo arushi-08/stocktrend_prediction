@@ -94,7 +94,7 @@ try:
             raw_main_content = str(soup.find("div", {"class": "main-content-container"})).replace("\n", "").replace("\t", "")
             news_body[idx] = raw_main_content
         next_start += 1
-        if next_start % 100 == 99:
+        if next_start % 100 == 0:
             with open(out_file, 'a', encoding="utf-8") as wf:
                 for k, v in news_body.items():
                     wf.write(f"{k: <10d}{v}\n")
