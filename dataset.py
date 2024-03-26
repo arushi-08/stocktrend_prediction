@@ -41,7 +41,7 @@ def load_dataset(dataset_name, file_name=None, file_names=[]):
     if file_name is None:
         return file_data
     else:
-        file_data.get(file_name, {})
+        return file_data.get(file_name, {})
 
 
 if __name__ == "__main__":
