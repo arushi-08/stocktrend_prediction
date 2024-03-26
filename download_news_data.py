@@ -35,9 +35,10 @@ with open(lock_file, "w") as wf:
 
 raw_analyst_ratings_df = load_dataset(dataset_name, file_name)
 # raw_analyst_ratings_df = pd.read_csv('raw_analyst_ratings.csv')
+raw_analyst_ratings_df.sort_values(by=['date'], ascending=False, inplace=True)
 num_rows = len(raw_analyst_ratings_df)
-start = num_rows//4
-end = num_rows//2
+start = 0
+end = num_rows//10
 
 if os.path.isfile(track_file):
     with open(track_file, 'r') as tf:
