@@ -36,8 +36,8 @@ with open(lock_file, "w") as wf:
 raw_analyst_ratings_df = load_dataset(dataset_name, file_name)
 # raw_analyst_ratings_df = pd.read_csv('raw_analyst_ratings.csv')
 num_rows = len(raw_analyst_ratings_df)
-start = num_rows//2
-end = num_rows*3//4
+start = num_rows//4
+end = num_rows//2
 
 if os.path.isfile(track_file):
     with open(track_file, 'r') as tf:
@@ -76,6 +76,9 @@ try:
                     break
                 elif response.status_code == 429:
                     sleep(5)
+                elif response.status_code == 404:
+                    print(f"Failed with {response.status_code} while retrieving: {url}")
+                    break
                 else:
                     print(f"Failed with {response.status_code} while retrieving: {url}")
                     sleep(backoff_factor[r])
