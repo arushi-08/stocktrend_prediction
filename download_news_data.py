@@ -19,7 +19,9 @@ file_name = 'raw_analyst_ratings.csv'
 raw_data_dir = os.path.join(get_path(dataset_name), 'raw_data')
 os.makedirs(raw_data_dir, exist_ok=True)
 
-
+headers = {
+    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:125.0) Gecko/20100101 Firefox/125.0'
+}
 
 out_file = os.path.join(raw_data_dir, f"data.txt")
 lock_file = os.path.join(raw_data_dir, f"run.lock")
@@ -68,7 +70,7 @@ try:
 
         for r in range(retries):
             try:
-                response = requests.get(url, timeout=2)
+                response = requests.get(url, headers=headers, timeout=2)
                 if response.status_code == 200:
                     html_content = response.text
                     break
