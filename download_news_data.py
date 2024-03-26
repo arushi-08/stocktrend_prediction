@@ -36,6 +36,7 @@ with open(lock_file, "w") as wf:
 raw_analyst_ratings_df = load_dataset(dataset_name, file_name)
 # raw_analyst_ratings_df = pd.read_csv('raw_analyst_ratings.csv')
 raw_analyst_ratings_df.sort_values(by=['date'], ascending=False, inplace=True)
+raw_analyst_ratings_df.reset_index(drop=True)
 num_rows = len(raw_analyst_ratings_df)
 start = 0
 end = num_rows
