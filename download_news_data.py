@@ -91,11 +91,11 @@ try:
         if _idx % 100 == 99:
             with open(out_file, 'a', encoding="utf-8") as wf:
                 for k, v in news_body.items():
-                    wf.write(f"{k: <10d}\t{v}\n")
+                    wf.write(f"{k: <10d}{v}\n")
                 news_body.clear()
             with open(track_file, 'w') as wtf:
                 wtf.write(f"{next_start}")
-        time.sleep(0.3)
+        time.sleep(0.5)
 
 except KeyboardInterrupt:
     print("Keyboard interrupt, exiting safely")
@@ -108,5 +108,5 @@ finally:
     os.remove(lock_file)
     with open(out_file, 'a', encoding="utf-8") as wf:
         for k, v in news_body.items():
-            wf.write(f"{k: <10d}\t{v}\n")
+            wf.write(f"{k: <10d}{v}\n")
         news_body.clear()
