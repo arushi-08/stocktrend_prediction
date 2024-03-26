@@ -38,7 +38,7 @@ raw_analyst_ratings_df = load_dataset(dataset_name, file_name)
 raw_analyst_ratings_df.sort_values(by=['date'], ascending=False, inplace=True)
 num_rows = len(raw_analyst_ratings_df)
 start = 0
-end = num_rows//10
+end = num_rows
 
 if os.path.isfile(track_file):
     with open(track_file, 'r') as tf:
@@ -93,8 +93,8 @@ try:
             soup = BeautifulSoup(html_content, 'html.parser')
             raw_main_content = str(soup.find("div", {"class": "main-content-container"})).replace("\n", "").replace("\t", "")
             news_body[idx] = raw_main_content
-        next_start = _idx + 1
-        if _idx % 100 == 99:
+        next_start += 1
+        if next_start % 100 == 99:
             with open(out_file, 'a', encoding="utf-8") as wf:
                 for k, v in news_body.items():
                     wf.write(f"{k: <10d}{v}\n")
