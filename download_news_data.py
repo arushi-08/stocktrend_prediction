@@ -9,6 +9,7 @@ from itertools import islice
 import os
 import json
 from requests.adapters import HTTPAdapter, Retry
+import traceback
 
 from dataset import load_dataset,get_path
 
@@ -40,9 +41,12 @@ if os.path.isfile(track_file):
     with open(track_file, 'r') as tf:
         try:
             x = int(tf.read())
+            print(x)
             if x > start and x <= end:
                 start = x
         except:
+            print(tf.read())
+            exit(0)
             pass
 
 print(start, end)
@@ -52,7 +56,7 @@ backoff = 0.5
 backoff_factor = [backoff * (2 ** i) for i in range(retries)]
 
 news_body = {}
-
+next_start = start
 try:
     for _idx, row in tqdm(islice(raw_analyst_ratings_df.iterrows(), start, end)):
         
@@ -76,29 +80,33 @@ try:
             except KeyboardInterrupt as kbe:
                 raise kbe
             except Exception as e:
+                sleep(5)
                 print(e)
 
-        soup = BeautifulSoup(html_content, 'html.parser')
-        raw_main_content = str(soup.find("div", {"class": "main-content-container"})).replace("\n", "").replace("\t", "")
-        news_body[idx] = raw_main_content
+        if html_content is not None:
+            soup = BeautifulSoup(html_content, 'html.parser')
+            raw_main_content = str(soup.find("div", {"class": "main-content-container"})).replace("\n", "").replace("\t", "")
+            news_body[idx] = raw_main_content
+        next_start = _idx + 1
         if _idx % 100 == 99:
-            with open(out_file, 'a') as wf:
+            with open(out_file, 'a', encoding="utf-8") as wf:
                 for k, v in news_body.items():
                     wf.write(f"{k}\t{v}\n")
                 news_body.clear()
             with open(track_file, 'w') as wtf:
-                wtf.write(f"{(_idx+start)}")
+                wtf.write(f"{next_start}")
         time.sleep(0.3)
 
 except KeyboardInterrupt:
     print("Keyboard interrupt, exiting safely")
 except Exception as e:
     print(e)
+    print(traceback.format_exc())
 finally:
-    with open(out_file, 'a') as wf:
+    with open(track_file, 'w') as wtf:
+        wtf.write(f"{next_start}")
+    os.remove(lock_file)
+    with open(out_file, 'a', encoding="utf-8") as wf:
         for k, v in news_body.items():
             wf.write(f"{k}\t{v}\n")
         news_body.clear()
-    os.remove(lock_file)
-    with open(track_file, 'w') as wtf:
-        wtf.write(f"{(_idx+start)}")
