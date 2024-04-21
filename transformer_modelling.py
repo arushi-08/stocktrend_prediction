@@ -250,7 +250,7 @@ def predict_next_day_price(model, last_data_point, scaler=None):
         predicted_price = scaler.inverse_transform([[predicted_scaled_price[0][0], 0, 0, 0, 0]])[0][0]
     else:
         predicted_price = predicted_scaled_price
-        # predicted_price = scaler.inverse_transform([[predicted_scaled_price[0][0], 0, 0, 0, 0]])[0][0]
+        
     return predicted_price
 
 def apply_decay(df, decay_factor):
@@ -356,3 +356,8 @@ plt.show()
 # Mean Absolute Error (MAE): 3.1986416427667392
 # Mean Squared Error (MSE): 16.535260759628358
 # Root Mean Squared Error (RMSE): 4.066357185446005
+
+# context_days = 10
+# Mean Absolute Error (MAE): 4.263220358585966
+# Mean Squared Error (MSE): 28.1058884893803
+# Root Mean Squared Error (RMSE): 5.301498702195475
