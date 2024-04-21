@@ -93,7 +93,7 @@ def compute_technical_indicators(data):
     return data_filled
 
 # Step 3: Prepare data
-def prepare_data(data, news_columns=[], decay_factor=0, n_context_days = 10):
+def prepare_data(data, news_columns=[], decay_factor=0, n_context_days = 3):
 
     if news_columns:
         data['decayed_score'] = apply_decay(data, decay_factor)
@@ -327,10 +327,11 @@ plt.show()
 
 
 
-
+# Numerical + News Sentiment Data
 
 # without positional encoding
-# new
+
+# context_days = 5
 # Mean Absolute Error (MAE): 2.972464000274989
 # Mean Squared Error (MSE): 13.309710675209596
 # Root Mean Squared Error (RMSE): 3.648247617036102
@@ -352,7 +353,12 @@ plt.show()
 
 # with positional encoding
 
-# new
+# context_days = 3
+# Mean Absolute Error (MAE): 2.6753567306573642
+# Mean Squared Error (MSE): 11.545681378771157
+# Root Mean Squared Error (RMSE): 3.3978936679612497
+
+# context_days = 5
 # Mean Absolute Error (MAE): 3.1986416427667392
 # Mean Squared Error (MSE): 16.535260759628358
 # Root Mean Squared Error (RMSE): 4.066357185446005
@@ -361,3 +367,4 @@ plt.show()
 # Mean Absolute Error (MAE): 4.263220358585966
 # Mean Squared Error (MSE): 28.1058884893803
 # Root Mean Squared Error (RMSE): 5.301498702195475
+
