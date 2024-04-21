@@ -4,13 +4,9 @@ from keras import layers
 import yfinance as yf
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Dropout
-from ta.trend import SMAIndicator
-from ta.momentum import RSIIndicator
-from ta.volatility import BollingerBands
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import matplotlib.pyplot as plt
 import lzma
@@ -340,7 +336,6 @@ plt.show()
 # Mean Absolute Error (MAE): 6.889542538186778
 # Mean Squared Error (MSE): 62.022623332968344
 # Root Mean Squared Error (RMSE): 7.875444326066202
-
 
 
 
