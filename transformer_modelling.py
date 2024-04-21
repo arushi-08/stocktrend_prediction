@@ -18,6 +18,9 @@ import pickle
 import numpy as np
 import tensorflow as tf
 
+import random
+random.seed(42)
+np.random.seed(42)
 tf.random.set_seed(42)
 
 class PositionalEncoding(layers.Layer):
@@ -90,7 +93,7 @@ def compute_technical_indicators(data):
     return data_filled
 
 # Step 3: Prepare data
-def prepare_data(data, news_columns=[], n_context_days = 5):
+def prepare_data(data, news_columns=[], n_context_days = 10):
 #     scaler = MinMaxScaler(feature_range=(0, 1))
 #     scaled_data = scaler.fit_transform(data[['Close', 'RSI', 'EMA', 'SMA', 'MACD']])
     scaled_data = data[['Close', 'RSI', 'EMA', 'SMA', 'MACD']+news_columns].values
@@ -172,14 +175,14 @@ def build_model(
 #     n_timesteps, n_features, n_outputs = 5, 1, 5
     inputs = keras.Input(shape=(input_shape))
     # Create positional encoding
-    # positional_encoding_layer = PositionalEncoding(input_shape[0], input_shape[1])
-    # x = positional_encoding_layer(inputs)
+    positional_encoding_layer = PositionalEncoding(input_shape[0], input_shape[1])
+    x = positional_encoding_layer(inputs)
 #     print("input_shape",inputs.shape)
     
     # time_embedding = Time2Vector(input_shape[0])
     # x = time_embedding(inputs)
     # x = layers.Concatenate(axis=-1)([inputs, x])
-    x = inputs
+    # x = inputs
     for _ in range(num_transformer_blocks):
         x = transformer_encoder(x, head_size, num_heads, ff_dim, dropout)
 
@@ -323,15 +326,15 @@ plt.show()
 
 
 # without positional encoding
-
-# Mean Absolute Error (MAE): 5.944620896762889
-# Mean Squared Error (MSE): 47.14848629847784
-# Root Mean Squared Error (RMSE): 6.866475536873181
-
 # new
 # Mean Absolute Error (MAE): 2.972464000274989
 # Mean Squared Error (MSE): 13.309710675209596
 # Root Mean Squared Error (RMSE): 3.648247617036102
+
+# context_days = 10
+# Mean Absolute Error (MAE): 6.889542538186778
+# Mean Squared Error (MSE): 62.022623332968344
+# Root Mean Squared Error (RMSE): 7.875444326066202
 
 
 
@@ -345,6 +348,7 @@ plt.show()
 
 # with positional encoding
 
-# Mean Absolute Error (MAE): 27.633285384746234
-# Mean Squared Error (MSE): 805.5154111697433
-# Root Mean Squared Error (RMSE): 28.381603393214824
+# new
+# Mean Absolute Error (MAE): 3.1986416427667392
+# Mean Squared Error (MSE): 16.535260759628358
+# Root Mean Squared Error (RMSE): 4.066357185446005
