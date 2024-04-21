@@ -274,6 +274,23 @@ def main(symbol, start_date, end_date, decay_factor):
     # X, y, scaler = prepare_data(data_w_sentiment)
     X, y = prepare_data(data_w_sentiment, news_columns=['decayed_score'], decay_factor=decay_factor)
 
+
+    # # AMZN
+    # symbol = 'AMZN'
+    # data = fetch_stock_data(symbol, "2018-01-01", end_date)
+    # data_with_technical_indicators = compute_technical_indicators(data)
+
+    # with lzma.open(f'datasets/ticker_data/sentiments/{symbol}.xz') as rf:
+    #     sentiment_data = pickle.load(rf)
+
+    # sentiment_df = pd.DataFrame.from_dict(sentiment_data, orient='index')
+    # sentiment_df.index = pd.to_datetime(sentiment_df.index)
+    # data_w_sentiment = data_with_technical_indicators.join(sentiment_df)
+
+    # X, y, scaler = prepare_data(data_w_sentiment)
+    # X_test, y_test = prepare_data(data_w_sentiment, news_columns=['decayed_score'], decay_factor=decay_factor)
+
+
     # X = X.reshape(X.shape[0], 1, X.shape[-1])
     # Split data into training and testing sets
     split_index = int(len(X) * 0.8)
@@ -304,7 +321,7 @@ def main(symbol, start_date, end_date, decay_factor):
 # Fetch data
 symbol = 'AAPL'  # Example symbol
 start_date = '2015-01-01'
-end_date = '2022-01-01'
+end_date = '2020-01-01'
 decay_factor = 0.9 
 
 y_test, y_pred = main(symbol, start_date, end_date, decay_factor)
@@ -363,3 +380,16 @@ plt.show()
 # Mean Squared Error (MSE): 28.1058884893803
 # Root Mean Squared Error (RMSE): 5.301498702195475
 
+
+# Training on 5 companies data
+# Testing on 2 companies data
+# show that this model will do well for companies without much historical data
+
+# technicality:
+# LSTM
+# Dataset level - 3 exps - numerical / numerical + news / numerical + sentiment
+
+# Transformers
+# Dataset level - 3 exps - numerical / numerical + news / numerical + sentiment
+# use best of above - 2 exps - with positional encoding / without positional encoding
+# context days - 3 exps - days = 3, 5, 10 (hopefully with 10th day with positional encoding does better)
