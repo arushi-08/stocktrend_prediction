@@ -93,7 +93,22 @@ def compute_technical_indicators(data):
     return data_filled
 
 # Step 3: Prepare data
-def prepare_data(data, news_columns=[], n_context_days = 10):
+def prepare_data(data, news_columns=[], decay_factor=0, n_context_days = 10):
+
+    if news_columns:
+        data['decayed_score'] = apply_decay(data, decay_factor)
+        data['label'] = data['label'].ffill()
+        data['decayed_score'] = np.where(
+            data['label']=='neutral', 0, 
+            data['decayed_score']
+        )
+        data['decayed_score'] = np.where(
+            data['label']=='negative', 
+            -data['decayed_score'], 
+            data['decayed_score']
+        )
+        data = data.drop(columns=['score', 'label']).dropna()
+
 #     scaler = MinMaxScaler(feature_range=(0, 1))
 #     scaled_data = scaler.fit_transform(data[['Close', 'RSI', 'EMA', 'SMA', 'MACD']])
     scaled_data = data[['Close', 'RSI', 'EMA', 'SMA', 'MACD']+news_columns].values
@@ -238,7 +253,7 @@ def predict_next_day_price(model, last_data_point, scaler=None):
         # predicted_price = scaler.inverse_transform([[predicted_scaled_price[0][0], 0, 0, 0, 0]])[0][0]
     return predicted_price
 
-def apply_decay(df):
+def apply_decay(df, decay_factor):
     series = df['score']
     mask = series.isna()
     # Calculate the distance since the last non-NaN value
@@ -248,7 +263,6 @@ def apply_decay(df):
     df['decayed_score'] = decayed_values
     return np.where(df['score'].isna(), df['decayed_score'], df['score'])
     
-
 
 def main(symbol, start_date, end_date, decay_factor):
     data = fetch_stock_data(symbol, start_date, end_date)
@@ -261,21 +275,8 @@ def main(symbol, start_date, end_date, decay_factor):
     sentiment_df.index = pd.to_datetime(sentiment_df.index)
     data_w_sentiment = data_with_technical_indicators.join(sentiment_df)
 
-    data_w_sentiment['decayed_score'] = apply_decay(data_w_sentiment)
-    data_w_sentiment['label'] = data_w_sentiment['label'].ffill()
-    data_w_sentiment['decayed_score'] = np.where(
-        data_w_sentiment['label']=='neutral', 0, 
-        data_w_sentiment['decayed_score']
-    )
-    data_w_sentiment['decayed_score'] = np.where(
-        data_w_sentiment['label']=='negative', 
-        -data_w_sentiment['decayed_score'], 
-        data_w_sentiment['decayed_score']
-    )
-    data_w_sentiment = data_w_sentiment.drop(columns=['score', 'label']).dropna()
-
     # X, y, scaler = prepare_data(data_w_sentiment)
-    X, y = prepare_data(data_w_sentiment, news_columns=['decayed_score'])
+    X, y = prepare_data(data_w_sentiment, news_columns=['decayed_score'], decay_factor=decay_factor)
 
     # X = X.reshape(X.shape[0], 1, X.shape[-1])
     # Split data into training and testing sets
@@ -283,10 +284,7 @@ def main(symbol, start_date, end_date, decay_factor):
     X_train, X_test = X[:split_index], X[split_index:]
     y_train, y_test = y[:split_index], y[split_index:]
 
-    # Train model
     model = train_model(X_train, y_train, X_test, y_test)
-
-    # Evaluate model
     loss = evaluate_model(model, X_test, y_test)
     print("Test Loss:", loss)  # Test loss: Represents the average loss (error) between the predicted values and the actual values. Lower values indicate better performance.
     # Predict next day's closing price
@@ -294,7 +292,6 @@ def main(symbol, start_date, end_date, decay_factor):
 
     next_day_price = predict_next_day_price(model, last_data_point)
     print("Predicted Next Day's Closing Price:", next_day_price)
-
 
     # Calculate additional evaluation metrics
     y_pred = model.predict(X_test)
@@ -315,6 +312,7 @@ end_date = '2022-01-01'
 decay_factor = 0.9 
 
 y_test, y_pred = main(symbol, start_date, end_date, decay_factor)
+
 # Visualize model predictions
 plt.figure(figsize=(10, 6))
 plt.plot(y_test, label='Actual Stock Prices')
