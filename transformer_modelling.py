@@ -250,65 +250,71 @@ def apply_decay(df):
     
 
 
+def main(symbol, start_date, end_date, decay_factor):
+    data = fetch_stock_data(symbol, start_date, end_date)
+    data_with_technical_indicators = compute_technical_indicators(data)
+
+    with lzma.open(f'datasets/ticker_data/sentiments/{symbol}.xz') as rf:
+        sentiment_data = pickle.load(rf)
+
+    sentiment_df = pd.DataFrame.from_dict(sentiment_data, orient='index')
+    sentiment_df.index = pd.to_datetime(sentiment_df.index)
+    data_w_sentiment = data_with_technical_indicators.join(sentiment_df)
+
+    data_w_sentiment['decayed_score'] = apply_decay(data_w_sentiment)
+    data_w_sentiment['label'] = data_w_sentiment['label'].ffill()
+    data_w_sentiment['decayed_score'] = np.where(
+        data_w_sentiment['label']=='neutral', 0, 
+        data_w_sentiment['decayed_score']
+    )
+    data_w_sentiment['decayed_score'] = np.where(
+        data_w_sentiment['label']=='negative', 
+        -data_w_sentiment['decayed_score'], 
+        data_w_sentiment['decayed_score']
+    )
+    data_w_sentiment = data_w_sentiment.drop(columns=['score', 'label']).dropna()
+
+    # X, y, scaler = prepare_data(data_w_sentiment)
+    X, y = prepare_data(data_w_sentiment, news_columns=['decayed_score'])
+
+    # X = X.reshape(X.shape[0], 1, X.shape[-1])
+    # Split data into training and testing sets
+    split_index = int(len(X) * 0.8)
+    X_train, X_test = X[:split_index], X[split_index:]
+    y_train, y_test = y[:split_index], y[split_index:]
+
+    # Train model
+    model = train_model(X_train, y_train, X_test, y_test)
+
+    # Evaluate model
+    loss = evaluate_model(model, X_test, y_test)
+    print("Test Loss:", loss)  # Test loss: Represents the average loss (error) between the predicted values and the actual values. Lower values indicate better performance.
+    # Predict next day's closing price
+    last_data_point = X_test[-1]
+
+    next_day_price = predict_next_day_price(model, last_data_point)
+    print("Predicted Next Day's Closing Price:", next_day_price)
+
+
+    # Calculate additional evaluation metrics
+    y_pred = model.predict(X_test)
+    mae = mean_absolute_error(y_test, y_pred)
+    mse = mean_squared_error(y_test, y_pred)
+    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+
+    print("Mean Absolute Error (MAE):", mae)  # Mean Absolute Error (MAE): Average magnitude of the errors in the predictions. Lower values indicate better performance.
+    print("Mean Squared Error (MSE):", mse)  # Mean Squared Error (MSE): Average of the squared differences between the predicted values and the actual values. Lower values indicate better performance.
+    print("Root Mean Squared Error (RMSE):", rmse)  # Root Mean Squared Error (RMSE): Standard deviation of the residuals (prediction errors). Lower values indicate better performance.
+
+    return y_test, y_pred
+
 # Fetch data
 symbol = 'AAPL'  # Example symbol
 start_date = '2015-01-01'
 end_date = '2022-01-01'
-data = fetch_stock_data(symbol, start_date, end_date)
-data_with_technical_indicators = compute_technical_indicators(data)
-
 decay_factor = 0.9 
 
-with lzma.open(f'datasets/ticker_data/sentiments/{symbol}.xz') as rf:
-    sentiment_data = pickle.load(rf)
-
-sentiment_df = pd.DataFrame.from_dict(sentiment_data, orient='index')
-sentiment_df.index = pd.to_datetime(sentiment_df.index)
-
-data_w_sentiment = data_with_technical_indicators.join(sentiment_df)
-data_w_sentiment['decayed_score'] = apply_decay(data_w_sentiment)
-data_w_sentiment['label'] = data_w_sentiment['label'].ffill()
-data_w_sentiment['decayed_score'] = np.where(
-    data_w_sentiment['label']=='neutral', 0, data_w_sentiment['decayed_score']
-)
-data_w_sentiment['decayed_score'] = np.where(
-    data_w_sentiment['label']=='negative', -data_w_sentiment['decayed_score'], data_w_sentiment['decayed_score']
-)
-data_w_sentiment = data_w_sentiment.drop(columns=['score', 'label']).dropna()
-
-# X, y, scaler = prepare_data(data_w_sentiment)
-X, y = prepare_data(data_w_sentiment, news_columns=['decayed_score'])
-
-# X = X.reshape(X.shape[0], 1, X.shape[-1])
-# Split data into training and testing sets
-split_index = int(len(X) * 0.8)
-X_train, X_test = X[:split_index], X[split_index:]
-y_train, y_test = y[:split_index], y[split_index:]
-
-# Train model
-model = train_model(X_train, y_train, X_test, y_test)
-
-# Evaluate model
-loss = evaluate_model(model, X_test, y_test)
-print("Test Loss:", loss)  # Test loss: Represents the average loss (error) between the predicted values and the actual values. Lower values indicate better performance.
-# Predict next day's closing price
-last_data_point = X_test[-1]
-# next_day_price = predict_next_day_price(model, last_data_point, scaler)
-next_day_price = predict_next_day_price(model, last_data_point)
-print("Predicted Next Day's Closing Price:", next_day_price)
-
-
-# Calculate additional evaluation metrics
-y_pred = model.predict(X_test)
-mae = mean_absolute_error(y_test, y_pred)
-mse = mean_squared_error(y_test, y_pred)
-rmse = np.sqrt(mean_squared_error(y_test, y_pred))
-
-
-print("Mean Absolute Error (MAE):", mae)  # Mean Absolute Error (MAE): Average magnitude of the errors in the predictions. Lower values indicate better performance.
-print("Mean Squared Error (MSE):", mse)  # Mean Squared Error (MSE): Average of the squared differences between the predicted values and the actual values. Lower values indicate better performance.
-print("Root Mean Squared Error (RMSE):", rmse)  # Root Mean Squared Error (RMSE): Standard deviation of the residuals (prediction errors). Lower values indicate better performance.
-
+y_test, y_pred = main(symbol, start_date, end_date, decay_factor)
 # Visualize model predictions
 plt.figure(figsize=(10, 6))
 plt.plot(y_test, label='Actual Stock Prices')
