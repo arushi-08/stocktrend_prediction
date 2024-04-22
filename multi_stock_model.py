@@ -1,6 +1,7 @@
 
 from enum import Enum
-
+import lzma
+import pickle
 
 from exps import *
 
@@ -46,7 +47,6 @@ def multi_main(train_symbols, eval_symbols, start_date, end_date, decay_factor, 
     # y_train, y_test = y[:split_index], y[split_index:]
 
     X_train, y_train = get_tickers(train_symbols, dtype, decay_factor, n_context_days)
-    X_test, y_test = get_tickers(eval_symbols, dtype, decay_factor, n_context_days)
 
     if model_type == 'LSTM':#ModelType.LSTM:
         model = train_lstm_model(X_train, y_train)
@@ -55,44 +55,52 @@ def multi_main(train_symbols, eval_symbols, start_date, end_date, decay_factor, 
     else:
         raise NotImplementedError()
     
-    loss = evaluate_model(model, X_test, y_test)
-    print("Test Loss:", loss)  # Test loss: Represents the average loss (error) between the predicted values and the actual values. Lower values indicate better performance.
+    stats = {}
     
-    # Predict next day's closing price
-    last_data_point = X_test[-1]
-    next_day_price = predict_next_day_price(model, last_data_point)
-    print("Predicted Next Day's Closing Price:", next_day_price)
+    for symbol in eval_symbols:
 
-    # Calculate additional evaluation metrics
-    y_pred = model.predict(X_test)
-    mae = mean_absolute_error(y_true=y_test, y_pred=y_pred)
-    mse = mean_squared_error(y_true=y_test, y_pred=y_pred)
-    rmse = np.sqrt(mean_squared_error(y_true=y_test, y_pred=y_pred))
-    mape = mean_absolute_percentage_error(y_true=y_test, y_pred=y_pred)
+        X_test, y_test = get_tickers([symbol], dtype, decay_factor, n_context_days)
+        loss = evaluate_model(model, X_test, y_test)
+        print("Test Loss:", loss)  # Test loss: Represents the average loss (error) between the predicted values and the actual values. Lower values indicate better performance.
+        
+        # Predict next day's closing price
+        last_data_point = X_test[-1]
+        next_day_price = predict_next_day_price(model, last_data_point)
+        print("Predicted Next Day's Closing Price:", next_day_price)
 
-    # print("Mean Absolute Error (MAE):", mae)  # Mean Absolute Error (MAE): Average magnitude of the errors in the predictions. Lower values indicate better performance.
-    # print("Mean Squared Error (MSE):", mse)  # Mean Squared Error (MSE): Average of the squared differences between the predicted values and the actual values. Lower values indicate better performance.
-    # print("Root Mean Squared Error (RMSE):", rmse)  # Root Mean Squared Error (RMSE): Standard deviation of the residuals (prediction errors). Lower values indicate better performance.
+        # Calculate additional evaluation metrics
+        y_pred = model.predict(X_test)
+        mae = mean_absolute_error(y_true=y_test, y_pred=y_pred)
+        mse = mean_squared_error(y_true=y_test, y_pred=y_pred)
+        rmse = np.sqrt(mean_squared_error(y_true=y_test, y_pred=y_pred))
+        mape = mean_absolute_percentage_error(y_true=y_test, y_pred=y_pred)
+
+        # print("Mean Absolute Error (MAE):", mae)  # Mean Absolute Error (MAE): Average magnitude of the errors in the predictions. Lower values indicate better performance.
+        # print("Mean Squared Error (MSE):", mse)  # Mean Squared Error (MSE): Average of the squared differences between the predicted values and the actual values. Lower values indicate better performance.
+        # print("Root Mean Squared Error (RMSE):", rmse)  # Root Mean Squared Error (RMSE): Standard deviation of the residuals (prediction errors). Lower values indicate better performance.
 
 
-    data = [[f"{model_type}_multi_{n_context_days}_{dtype}_pos_embed_{with_pos_embed}", mae, mse, rmse, mape]]
+        data = [[f"{model_type}_{n_context_days}_{dtype}_pos_embed_{with_pos_embed}", symbol, "-".join(train_symbols), mae, mse, rmse, mape]]
 
-    df = pd.DataFrame(data, 
-                      columns=["Evaluation_type", 
-                               "Mean Absolute Error", 
-                               "Mean Squared Error", 
-                               "Root Mean Squared Error", 
-                               "Mean Absolute Percentage Error"
-                               ]
-                               )
+        df = pd.DataFrame(data, 
+                        columns=["Evaluation_type", 
+                                 "Symbol",
+                                 "Train Symbols",
+                                "Mean Absolute Error", 
+                                "Mean Squared Error", 
+                                "Root Mean Squared Error", 
+                                "Mean Absolute Percentage Error"
+                                ]
+                                )
 
-    if os.path.exists('multi_eval_results.csv'):
-        results_df = pd.read_csv('multi_eval_results.csv')
-        pd.concat([results_df, df]).to_csv('multi_eval_results.csv', index=False)
-    else:
-        df.to_csv('multi_eval_results.csv', index=False)
+        if os.path.exists('multi_eval_results.csv'):
+            results_df = pd.read_csv('multi_eval_results.csv')
+            pd.concat([results_df, df]).to_csv('multi_eval_results.csv', index=False)
+        else:
+            df.to_csv('multi_eval_results.csv', index=False)
+        stats[symbol] = [y_test, y_pred]
 
-    return y_test, y_pred
+    return stats
 
 
 
@@ -120,16 +128,19 @@ train_symbols = ['AMZN', 'META', 'AAPL', 'TSLA', 'MSFT']
 eval_symbols = ['GOOGL', 'NFLX']
 
 decay_factor = 0.9
-n_context_days = 5
+n_context_days = 3
 
 model_type = "TRANSFORMER"
+# model_type = "LSTM"
 with_pos_embed = False
+
+data_types = ['numerical', 'numerical_n_news_sentiment']
 
 if __name__ == '__main__':
 
     for dtype in data_types:
 
-        y_test, y_pred = multi_main(
+        stats = multi_main(
             train_symbols,
             eval_symbols,
             start_date, 
@@ -141,14 +152,24 @@ if __name__ == '__main__':
             with_pos_embed
         )
 
-        # Visualize model predictions
-        plt.figure(figsize=(10, 6))
-        plt.plot(y_test, label='Actual Stock Prices')
-        plt.plot(y_pred, label='Predicted Stock Prices')
-        plt.title('Actual vs Predicted Stock Prices')
-        plt.xlabel('Time')
-        plt.ylabel(f'Stock Price {model_type.upper()} Model')
-        plt.legend()
-        # plt.show()
-        plt.savefig(f'plots/{model_type}_multi_{n_context_days}_{dtype}_pos_embed_{with_pos_embed}.png')
+        for symbol, (y_test, y_pred) in stats.items():
 
+            # Visualize model predictions
+            plt.figure(figsize=(10, 6))
+            plt.plot(y_test, label='Actual Stock Prices')
+            plt.plot(y_pred, label='Predicted Stock Prices')
+            plt.title('Actual vs Predicted Stock Prices')
+            plt.xlabel('Time')
+            plt.ylabel(f'Stock Price {model_type.upper()} Model')
+            plt.legend()
+            # plt.show()
+            multi = ""
+            if len(train_symbols) == 1:
+                multi = train_symbols[0]
+            else:
+                multi = "-".join(train_symbols)
+            plt.savefig(f'plots/multi/{model_type}_{symbol}_{multi}_{n_context_days}_{dtype}_pos_embed_{with_pos_embed}.png')
+
+            with lzma.open(f'pred/multi/{model_type}_{symbol}_{multi}_{n_context_days}_{dtype}_pos_embed_{with_pos_embed}.xz', "wb") as wf:
+                pickle.dump(stats[symbol], wf)
+        

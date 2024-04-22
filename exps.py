@@ -422,7 +422,7 @@ if __name__ == "__main__":
     # Fetch data
     symbol = 'AAPL'  # Example symbol
     dtype = 'numerical_n_news_sentiment' # [numerical, numerical_n_news_embed, numerical_n_news_sentiment]
-    with_pos_embed = True
+    with_pos_embed = False
     model_type = 'lstm'
 
     for dtype in data_types:
@@ -448,6 +448,8 @@ if __name__ == "__main__":
         plt.legend()
         # plt.show()
         plt.savefig(f'plots/{model_type}_{symbol}_{n_context_days}_{dtype}_pos_embed_{with_pos_embed}.png')
+        with lzma.open(f'pred/{model_type}_{symbol}_{n_context_days}_{dtype}_pos_embed_{with_pos_embed}.xz', "wb") as wf:
+            pickle.dump([y_test, y_pred], wf)
 
 
 # aapl_3_numerical_pos_embed_false
