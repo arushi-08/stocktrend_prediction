@@ -105,6 +105,8 @@ def prepare_data(data, news_columns=[], decay_factor=0, n_context_days = 3):
 
 
 def prepare_news_embed_data(symbol, data_with_technical_indicators):
+    if symbol == 'META':
+        symbol = 'FB'
     with lzma.open(f'datasets/ticker_data/embeddings/{symbol}.xz') as rf:
         data = pickle.load(rf)
     embedding_df = pd.DataFrame.from_dict(data, orient='index')
@@ -114,6 +116,8 @@ def prepare_news_embed_data(symbol, data_with_technical_indicators):
     return data_w_news
 
 def prepare_news_sentiment_data(symbol, data_with_technical_indicators):
+    if symbol == 'META':
+        symbol = 'FB'
     with lzma.open(f'datasets/ticker_data/sentiments/{symbol}.xz') as rf:
         sentiment_data = pickle.load(rf)
 
@@ -406,39 +410,44 @@ def main(symbol, start_date, end_date, decay_factor, n_context_days, dtype, mode
 
     return y_test, y_pred
 
-# Fetch data
-symbol = 'AAPL'  # Example symbol
+
 start_date = '2015-01-01'
 end_date = '2020-01-01'
 decay_factor = 0.9 
 n_context_days = 5
-dtype = 'numerical_n_news_sentiment' # [numerical, numerical_n_news_embed, numerical_n_news_sentiment]
-with_pos_embed = True
-model_type = 'lstm'
 
-for dtype in ['numerical', 'numerical_n_news_embed', 'numerical_n_news_sentiment']:
+data_types = ['numerical', 'numerical_n_news_embed', 'numerical_n_news_sentiment']
 
-    y_test, y_pred = main(
-        symbol, 
-        start_date, 
-        end_date, 
-        decay_factor, 
-        n_context_days, 
-        dtype,
-        model_type,
-        with_pos_embed
-        )
+if __name__ == "__main__":
+    # Fetch data
+    symbol = 'AAPL'  # Example symbol
+    dtype = 'numerical_n_news_sentiment' # [numerical, numerical_n_news_embed, numerical_n_news_sentiment]
+    with_pos_embed = True
+    model_type = 'lstm'
 
-    # Visualize model predictions
-    plt.figure(figsize=(10, 6))
-    plt.plot(y_test, label='Actual Stock Prices')
-    plt.plot(y_pred, label='Predicted Stock Prices')
-    plt.title('Actual vs Predicted Stock Prices')
-    plt.xlabel('Time')
-    plt.ylabel(f'Stock Price {model_type.upper()} Model')
-    plt.legend()
-    # plt.show()
-    plt.savefig(f'plots/{model_type}_{symbol}_{n_context_days}_{dtype}_pos_embed_{with_pos_embed}.png')
+    for dtype in data_types:
+
+        y_test, y_pred = main(
+            symbol, 
+            start_date, 
+            end_date, 
+            decay_factor, 
+            n_context_days, 
+            dtype,
+            model_type,
+            with_pos_embed
+            )
+
+        # Visualize model predictions
+        plt.figure(figsize=(10, 6))
+        plt.plot(y_test, label='Actual Stock Prices')
+        plt.plot(y_pred, label='Predicted Stock Prices')
+        plt.title('Actual vs Predicted Stock Prices')
+        plt.xlabel('Time')
+        plt.ylabel(f'Stock Price {model_type.upper()} Model')
+        plt.legend()
+        # plt.show()
+        plt.savefig(f'plots/{model_type}_{symbol}_{n_context_days}_{dtype}_pos_embed_{with_pos_embed}.png')
 
 
 # aapl_3_numerical_pos_embed_false
