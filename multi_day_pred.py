@@ -97,9 +97,9 @@ def prepare_data(data, news_columns=[], decay_factor=0, n_context_days = 3):
 #     scaled_data = scaler.fit_transform(data[['Close', 'RSI', 'EMA', 'SMA', 'MACD']])
     scaled_data = data[['Close', 'RSI', 'EMA', 'SMA', 'MACD']+news_columns].values
     X, y = [], []
-    for i in range(n_context_days, len(data)):
+    for i in range(n_context_days, len(data)-n_context_days):
         X.append(scaled_data[i-n_context_days:i])
-        y.append(scaled_data[i, 0])  # Closing price
+        y.append(scaled_data[i:i+n_context_days, 0])  # Closing price
     X, y = np.array(X), np.array(y)
     return X, y,# scaler
 
@@ -205,7 +205,8 @@ def build_model(
     mlp_units,
     dropout=0,
     mlp_dropout=0,
-    with_pos_embed=False
+    with_pos_embed=False,
+    n_outputs=1,
 ):
     
     inputs = keras.Input(shape=(input_shape))
@@ -229,10 +230,10 @@ def build_model(
     for dim in mlp_units:
         x = layers.Dense(dim, activation="relu")(x)
         x = layers.Dropout(mlp_dropout)(x)
-    outputs = layers.Dense(1, activation="linear")(x)
+    outputs = layers.Dense(n_outputs, activation="linear")(x)
     return keras.Model(inputs, outputs)
 
-def train_model(x_train, y_train, with_pos_embed):
+def train_model(x_train, y_train, with_pos_embed,output_days=1):
     input_shape = x_train.shape[1:]
 
     model = build_model(
@@ -244,7 +245,8 @@ def train_model(x_train, y_train, with_pos_embed):
         mlp_units=[128],
         mlp_dropout=0.4,
         dropout=0.35,
-        with_pos_embed=with_pos_embed
+        with_pos_embed=with_pos_embed,
+        n_outputs=output_days
     )
 
     model.compile(
@@ -370,7 +372,7 @@ def main(symbol, start_date, end_date, decay_factor, n_context_days, dtype, mode
     if model_type == 'lstm':
         model = train_lstm_model(X_train, y_train)
     elif model_type == 'transformer':
-        model = train_model(X_train, y_train, with_pos_embed)
+        model = train_model(X_train, y_train, with_pos_embed,output_days=n_context_days)
     loss = evaluate_model(model, X_test, y_test)
     print("Test Loss:", loss)  # Test loss: Represents the average loss (error) between the predicted values and the actual values. Lower values indicate better performance.
     
@@ -391,7 +393,7 @@ def main(symbol, start_date, end_date, decay_factor, n_context_days, dtype, mode
     # print("Root Mean Squared Error (RMSE):", rmse)  # Root Mean Squared Error (RMSE): Standard deviation of the residuals (prediction errors). Lower values indicate better performance.
 
 
-    data = [[f"{model_type}_{symbol}_{n_context_days}_{dtype}_pos_embed_{with_pos_embed}", mae, mse, rmse, mape]]
+    data = [[f"{model_type}_multiday_{symbol}_{n_context_days}_{dtype}_pos_embed_{with_pos_embed}", mae, mse, rmse, mape]]
 
     df = pd.DataFrame(data, 
                       columns=["Evaluation_type", 
@@ -423,7 +425,7 @@ if __name__ == "__main__":
     symbol = 'AAPL'  # Example symbol
     dtype = 'numerical_n_news_sentiment' # [numerical, numerical_n_news_embed, numerical_n_news_sentiment]
     with_pos_embed = False
-    model_type = 'lstm'
+    model_type = 'transformer'
 
     for dtype in data_types:
 
@@ -440,81 +442,17 @@ if __name__ == "__main__":
 
         # Visualize model predictions
         plt.figure(figsize=(10, 6))
-        plt.plot(y_test, label='Actual Stock Prices')
-        plt.plot(y_pred, label='Predicted Stock Prices')
+        plt.plot(y_test[:, 0], label='Actual Stock Prices')
+        for day in range(y_pred.shape[1]):
+            plt.plot(y_pred[:, day], label=f'Predicted {day+1} day future')
         plt.title('Actual vs Predicted Stock Prices')
         plt.xlabel('Time')
         plt.ylabel(f'Stock Price {model_type.upper()} Model')
         plt.legend()
         # plt.show()
-        plt.savefig(f'plots/{model_type}_{symbol}_{n_context_days}_{dtype}_pos_embed_{with_pos_embed}.png')
-        with lzma.open(f'pred/{model_type}_{symbol}_{n_context_days}_{dtype}_pos_embed_{with_pos_embed}.xz', "wb") as wf:
+        plt.savefig(f'plots/{model_type}_multiday_{symbol}_{n_context_days}_{dtype}_pos_embed_{with_pos_embed}.png')
+        with lzma.open(f'pred/{model_type}_multiday_{symbol}_{n_context_days}_{dtype}_pos_embed_{with_pos_embed}.xz', "wb") as wf:
             pickle.dump([y_test, y_pred], wf)
 
 
-# aapl_3_numerical_pos_embed_false
-# Mean Absolute Error (MAE): 1.1314397257162756
-# Mean Squared Error (MSE): 1.9890221097088925
-# Root Mean Squared Error (RMSE): 1.4103269513516687
-
-
-# aapl_3_numerical_n_news_embed_pos_embed_false
-
-
-
-
 # ------------------------------------------------------------------------------------------------------------------------
-
-# Numerical + News Sentiment Data
-
-# without positional encoding
-
-# context_days = 5
-# Mean Absolute Error (MAE): 2.972464000274989
-# Mean Squared Error (MSE): 13.309710675209596
-# Root Mean Squared Error (RMSE): 3.648247617036102
-
-# context_days = 10
-# Mean Absolute Error (MAE): 6.889542538186778
-# Mean Squared Error (MSE): 62.022623332968344
-# Root Mean Squared Error (RMSE): 7.875444326066202
-
-
-
-# time2vec layer
-
-# Mean Absolute Error (MAE): 7.229265481556365
-# Mean Squared Error (MSE): 71.16695418183684
-# Root Mean Squared Error (RMSE): 8.436050864109156
-
-
-# with positional encoding
-
-# context_days = 3
-# Mean Absolute Error (MAE): 2.6753567306573642
-# Mean Squared Error (MSE): 11.545681378771157
-# Root Mean Squared Error (RMSE): 3.3978936679612497
-
-# context_days = 5
-# Mean Absolute Error (MAE): 3.1986416427667392
-# Mean Squared Error (MSE): 16.535260759628358
-# Root Mean Squared Error (RMSE): 4.066357185446005
-
-# context_days = 10
-# Mean Absolute Error (MAE): 4.263220358585966
-# Mean Squared Error (MSE): 28.1058884893803
-# Root Mean Squared Error (RMSE): 5.301498702195475
-
-
-# Training on 5 companies data
-# Testing on 2 companies data
-# show that this model will do well for companies without much historical data
-
-# technicality:
-# LSTM
-# Dataset level - 3 exps - numerical / numerical + news / numerical + sentiment
-
-# Transformers
-# Dataset level - 3 exps - numerical / numerical + news / numerical + sentiment
-# use best of above - 2 exps - with positional encoding / without positional encoding
-# context days - 3 exps - days = 3, 5, 10 (hopefully with 10th day with positional encoding does better)

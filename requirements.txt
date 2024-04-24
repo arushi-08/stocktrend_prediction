@@ -8,3 +8,4 @@ scikit-learn
 tensorflow
 keras
 matplotlib
+pydot==1.4.2
