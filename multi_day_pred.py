@@ -443,7 +443,8 @@ if __name__ == "__main__":
         # Visualize model predictions
         plt.figure(figsize=(10, 6))
         plt.plot(y_test[:, 0], label='Actual Stock Prices')
-        plt.plot(y_pred, label='Predicted Stock Prices')
+        for day in range(y_pred.shape[1]):
+            plt.plot(y_pred[:, day], label=f'Predicted {day+1} day future')
         plt.title('Actual vs Predicted Stock Prices')
         plt.xlabel('Time')
         plt.ylabel(f'Stock Price {model_type.upper()} Model')
@@ -454,69 +455,4 @@ if __name__ == "__main__":
             pickle.dump([y_test, y_pred], wf)
 
 
-# aapl_3_numerical_pos_embed_false
-# Mean Absolute Error (MAE): 1.1314397257162756
-# Mean Squared Error (MSE): 1.9890221097088925
-# Root Mean Squared Error (RMSE): 1.4103269513516687
-
-
-# aapl_3_numerical_n_news_embed_pos_embed_false
-
-
-
-
 # ------------------------------------------------------------------------------------------------------------------------
-
-# Numerical + News Sentiment Data
-
-# without positional encoding
-
-# context_days = 5
-# Mean Absolute Error (MAE): 2.972464000274989
-# Mean Squared Error (MSE): 13.309710675209596
-# Root Mean Squared Error (RMSE): 3.648247617036102
-
-# context_days = 10
-# Mean Absolute Error (MAE): 6.889542538186778
-# Mean Squared Error (MSE): 62.022623332968344
-# Root Mean Squared Error (RMSE): 7.875444326066202
-
-
-
-# time2vec layer
-
-# Mean Absolute Error (MAE): 7.229265481556365
-# Mean Squared Error (MSE): 71.16695418183684
-# Root Mean Squared Error (RMSE): 8.436050864109156
-
-
-# with positional encoding
-
-# context_days = 3
-# Mean Absolute Error (MAE): 2.6753567306573642
-# Mean Squared Error (MSE): 11.545681378771157
-# Root Mean Squared Error (RMSE): 3.3978936679612497
-
-# context_days = 5
-# Mean Absolute Error (MAE): 3.1986416427667392
-# Mean Squared Error (MSE): 16.535260759628358
-# Root Mean Squared Error (RMSE): 4.066357185446005
-
-# context_days = 10
-# Mean Absolute Error (MAE): 4.263220358585966
-# Mean Squared Error (MSE): 28.1058884893803
-# Root Mean Squared Error (RMSE): 5.301498702195475
-
-
-# Training on 5 companies data
-# Testing on 2 companies data
-# show that this model will do well for companies without much historical data
-
-# technicality:
-# LSTM
-# Dataset level - 3 exps - numerical / numerical + news / numerical + sentiment
-
-# Transformers
-# Dataset level - 3 exps - numerical / numerical + news / numerical + sentiment
-# use best of above - 2 exps - with positional encoding / without positional encoding
-# context days - 3 exps - days = 3, 5, 10 (hopefully with 10th day with positional encoding does better)
