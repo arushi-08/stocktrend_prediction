@@ -28,7 +28,7 @@ os.makedirs(processed_data_dir, exist_ok=True)
 processed_count_file = os.path.join(processed_data_dir, "processed.count")
 
 companies = ['AAPL','META', 'GOOGL','AMZN', 'MSFT', "FB", "TSLA", "NFLX"]
-companies = []
+# companies = []
 companies = {c:1 for c in companies}
 def is_valid_ticker(t):
     return t in companies
