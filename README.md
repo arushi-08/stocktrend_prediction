@@ -8,10 +8,13 @@
 ### Environment setup
 
 `pip install -r requirements.txt`
+<hr />
 
 ### Download generated embeddings and sentiments
 
 Use this [link](https://pitt-my.sharepoint.com/:u:/g/personal/vep52_pitt_edu/EVvgnXBBHEFOjKFZoXTZhtQBnX_-5ciEBjqTBlkI32id9Q?e=J4MNqj) to download and extract it to `datasets/ticker_data`.
+
+<hr />
 
 ### Run experiments with models
 
@@ -23,11 +26,16 @@ Model generalization experiment:
 Predicting multiple days into the future:
 `python multi_day_pred.py`
 
+<hr />
+
 ### Generate embeddings and sentiments for news data
 
 Download extracted news using [link](https://pitt-my.sharepoint.com/:u:/g/personal/vep52_pitt_edu/EQWRaswzU2xIjAtyID8kyPkBmOmcp9Te-k5gf-SChU8NCA?e=bkDx1s) and extract it to `datasets/processed`. Then run the script:
 
 `python preprocess_news.py`
+
+
+<hr />
 
 ### Download raw news data
 
