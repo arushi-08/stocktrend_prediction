@@ -9,6 +9,12 @@ This study is designed to address the following questions:
 
 ### Environment setup
 
+```
+git clone https://github.com/arushi-08/Drug-Discovery-Knowledge-Graphs.git
+cd Drug-Discovery-Knowledge-Graphs
+```
+
+Install depedencies
 `pip install -r requirements.txt`
 <hr />
 
