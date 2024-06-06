@@ -1,7 +1,9 @@
 # Stock price prediction
 
-### Course: CS2756 Principles of Datamining (Spring 2024)
-### Group 12: Arushi Sharma, Lokesh Paturu, Norah Almousa
+
+This study is designed to address the following questions:
+1. How effective are the Deep Learning models in capturing stock price movements?
+2. Can NLP techniques capture relevant news information and aid for improving model performance?
 
 <hr />
 
