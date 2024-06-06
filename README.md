@@ -15,7 +15,9 @@ cd Drug-Discovery-Knowledge-Graphs
 ```
 
 Install depedencies
-`pip install -r requirements.txt`
+```
+pip install -r requirements.txt
+```
 <hr />
 
 ### Download generated embeddings and sentiments
