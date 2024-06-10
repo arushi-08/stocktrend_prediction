@@ -14,7 +14,7 @@ git clone https://github.com/arushi-08/stocktrend_prediction.git
 cd stocktrend_prediction
 ```
 
-Install depedencies
+Install dependencies
 ```
 pip install -r requirements.txt
 ```
